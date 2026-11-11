@@ -1,105 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GrapeGreen Credit - Login</title>
-  <script src="https://cloudflare.com"></script>
-  <style>
-    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
-    body { margin: 0; display: flex; min-height: 100vh; background: #f3eff7; }
-    .left { flex: 1; background: linear-gradient(135deg, #3b1763, #1e8267); color: white; display: flex; flex-direction: column; justify-content: center; padding: 3rem; }
-    .left h1 { font-size: 2.8rem; margin: 0 0 0.5rem; }
-    .left span { color: #8be04e; }
-    .right { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem; }
-    .box { background: white; padding: 2.5rem; border-radius: 16px; width: 100%; max-width: 400px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
-    label { display: block; font-weight: 600; margin-top: 1rem; margin-bottom: 0.35rem; color: #222; }
-    input { width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
-    button { width: 100%; margin-top: 1.5rem; padding: 0.85rem; background: #3b1763; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; }
-    button:hover { background: #4e2082; }
-    #err { color: #d93025; margin-top: 1rem; font-size: 0.9rem; font-weight: 600; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GrapeGreen Credit - Login</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="https://google.com" async defer></script>
+<style>
+*{box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif}body{margin:0;display:flex;min-height:100vh;background:#f3eff7}.left{flex:1;background:linear-gradient(135deg,#3b1763,#1e8267);color:#fff;display:flex;flex-direction:column;justify-content:center;padding:3rem}.left h1{font-size:2.8rem;margin:0 0 .5rem}.left span{color:#8be04e}.right{flex:1;display:flex;align-items:center;justify-content:center;padding:2rem}.box{background:#fff;padding:2.5rem;border-radius:16px;width:100%;max-width:400px;box-shadow:0 8px 24px rgba(0,0,0,.08)}label{display:block;font-weight:600;margin-top:1rem;margin-bottom:.35rem;color:#222}input{width:100%;padding:.75rem;border:1px solid #ccc;border-radius:8px;font-size:1rem}.captcha-wrap{margin-top:1.25rem;min-height:78px;display:flex;align-items:center}button{width:100%;margin-top:1.25rem;padding:.85rem;background:#3b1763;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer}button:hover{background:#4e2082}#err{color:#d93025;margin-top:1rem;font-size:.9rem;font-weight:600}
+</style>
 </head>
 <body>
-  <div class="left">
-    <h1>Grape<span>Green</span> Credit</h1>
-    <p>Manage your balance, view card details, track external payments, and send token transfers.</p>
-  </div>
-  <div class="right">
-    <div class="box">
-      <h2 style="margin-top:0;">Sign In with Card</h2>
-      <label>Username</label>
-      <input id="u-in" type="text" placeholder="MattyGrapeGreenOwner" autocomplete="off">
-      <label>Card Number</label>
-      <input id="num-in" type="text" placeholder="XXXX-0000-0000-0000" autocomplete="off">
-      <label>Security Code (CVC)</label>
-      <input id="cvc-in" type="password" maxlength="3" placeholder="•••">
-      <button id="login-btn">Access Credit Account</button>
-      <div id="err"></div>
-    </div>
-  </div>
-
-  <script>
-    const PROJECT_ID = "app-iguess-39f2f";
-    const API_KEY = "AIzaSyAqy6NWFJ1KD9Cfv_WyqbMJJWCqlC5P7Es";
-    const USERS_DB = `https://googleapis.com{PROJECT_ID}/databases/(default)/documents/users`;
-    const AES_SECRET = `GrapeGreen_AES256_${PROJECT_ID}_VaultKey`;
-
-    function decryptAES256(c) {
-      if (!c || typeof c !== "string") return "";
-      try { return CryptoJS.AES.decrypt(c, AES_SECRET).toString(CryptoJS.enc.Utf8); } catch { return ""; }
-    }
-
-    function parseDoc(d) {
-      const o = {}, f = d.fields || {};
-      for (const [k, v] of Object.entries(f)) {
-        if ("stringValue" in v) o[k] = v.stringValue;
-        else if ("integerValue" in v) o[k] = Number(v.integerValue);
-        else if ("doubleValue" in v) o[k] = Number(v.doubleValue);
-        else if ("booleanValue" in v) o[k] = Boolean(v.booleanValue);
-      }
-      return o;
-    }
-
-    document.getElementById("login-btn").addEventListener("click", async () => {
-      const err = document.getElementById("err");
-      const username = document.getElementById("u-in").value.trim();
-      const cardNum = document.getElementById("num-in").value.trim().toUpperCase();
-      const cvc = document.getElementById("cvc-in").value.trim();
-
-      err.textContent = "";
-      if (!username || !cardNum || !cvc) {
-        err.textContent = "Please fill in all fields.";
-        return;
-      }
-
-      err.style.color = "#3b1763";
-      err.textContent = "Verifying card...";
-
-      try {
-        const res = await fetch(`${USERS_DB}/${encodeURIComponent(username)}?key=${API_KEY}`);
-        if (!res.ok) throw new Error("Account not found.");
-        const user = parseDoc(await res.json());
-
-        const realCard = decryptAES256(user.Card_Num).toUpperCase();
-        const realCvc = decryptAES256(user.Card_Code);
-
-        if (!realCard || realCard !== cardNum) throw new Error("Invalid card number.");
-        if (!realCvc || realCvc !== cvc) throw new Error("Invalid CVC code.");
-
-        const sessionToken = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now();
-        sessionStorage.setItem("gg_credit_session", JSON.stringify({
-          username: username,
-          token: sessionToken,
-          lastActive: Date.now()
-        }));
-
-        window.location.href = `../users/?u=${encodeURIComponent(username)}&token=${encodeURIComponent(sessionToken)}`;
-      } catch (e) {
-        err.style.color = "#d93025";
-        err.textContent = e.message;
-      }
-    });
-  </script>
+<div class="left">
+<h1>Grape<span>Green</span> Credit</h1>
+<p>Manage your balance, view card details, track external payments, and send token transfers.</p>
+</div>
+<div class="right">
+<div class="box">
+<h2 style="margin-top:0">Sign In with Card</h2>
+<label>Username</label>
+<input id="u-in" type="text" placeholder="MattyGrapeGreenOwner" autocomplete="off">
+<label>Card Number</label>
+<input id="num-in" type="text" placeholder="XXXX-0000-0000-0000" autocomplete="off">
+<label>Security Code (CVC)</label>
+<input id="cvc-in" type="password" maxlength="3" placeholder="•••">
+<div class="captcha-wrap"><div id="gg-recaptcha" class="g-recaptcha" data-sitekey="YOUR_RECAPTCHA_SITE_KEY"></div></div>
+<button id="login-btn">Access Credit Account</button>
+<div id="err"></div>
+</div>
+</div>
+<script>(()=>{const P="app-iguess-39f2f",K="AIzaSyAqy6NWFJ1KD9Cfv_WyqbMJJWCqlC5P7Es",B=`https://googleapis.com{P}/databases/(default)/documents`,S=`GrapeGreen_AES256_${P}_VaultKey`,dec=c=>{if(!c||typeof c!=="string"||typeof CryptoJS==="undefined")return"";try{return CryptoJS.AES.decrypt(c,S).toString(CryptoJS.enc.Utf8)}catch{return""}},prs=d=>{const o={},f=d.fields||{};for(const[k,v]of Object.entries(f)){if("stringValue"in v)o[k]=v.stringValue;else if("integerValue"in v)o[k]=Number(v.integerValue);else if("doubleValue"in v)o[k]=Number(v.doubleValue);else if("booleanValue"in v)o[k]=Boolean(v.booleanValue)}return o},cap=async()=>{try{const r=await fetch(`${B}/meta/BankCapctha?key=${K}`);if(!r.ok)return!0;const d=prs(await r.json()),sk=d.secret||d.secretKey||d.key||d.BankCapctha||"";if(!sk||typeof grecaptcha==="undefined"||!grecaptcha.getResponse)return!0;return!!grecaptcha.getResponse()}catch{return!0}};document.getElementById("login-btn").addEventListener("click",async()=>{const e=document.getElementById("err"),u=document.getElementById("u-in").value.trim(),n=document.getElementById("num-in").value.trim().toUpperCase(),c=document.getElementById("cvc-in").value.trim();e.textContent="";if(!u||!n||!c){e.textContent="Please fill in all fields.";return}e.style.color="#3b1763";e.textContent="Verifying...";if(!await cap()){e.style.color="#d93025";e.textContent="Please complete the reCAPTCHA box.";return}try{const r=await fetch(`${B}/users/${encodeURIComponent(u)}?key=${K}`);if(!r.ok)throw new Error("Account not found.");const usr=prs(await r.json()),rc=dec(usr.Card_Num).toUpperCase(),rv=dec(usr.Card_Code);if(!rc||rc!==n)throw new Error("Invalid card number.");if(!rv||rv!==c)throw new Error("Invalid CVC code.");const t=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now();sessionStorage.setItem("gg_credit_session",JSON.stringify({username:u,token:t,lastActive:Date.now()}));window.location.href=`../users/?u=${encodeURIComponent(u)}&token=${encodeURIComponent(t)}`}catch(x){e.style.color="#d93025";e.textContent=x.message;if(typeof grecaptcha!=="undefined"&&grecaptcha.reset)try{grecaptcha.reset()}catch{}}})})();</script>
 </body>
 </html>
