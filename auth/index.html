@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GrapeGreen Credit - Login</title>
-<script src="https://cloudflare.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <style>
-*{box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif}body{margin:0;display:flex;min-height:100vh;background:#f3eff7}.left{flex:1;background:linear-gradient(135deg,#3b1763,#1e8267);color:#fff;display:flex;flex-direction:column;justify-content:center;padding:3rem}.left h1{font-size:2.8rem;margin:0 0 .5rem}.left span{color:#8be04e}.right{flex:1;display:flex;align-items:center;justify-content:center;padding:2rem}.box{background:#fff;padding:2.5rem;border-radius:16px;width:100%;max-width:400px;box-shadow:0 8px 24px rgba(0,0,0,.08)}label{display:block;font-weight:600;margin-top:1rem;margin-bottom:.35rem;color:#222}input{width:100%;padding:.75rem;border:1px solid #ccc;border-radius:8px;font-size:1rem}button{width:100%;margin-top:1.5rem;padding:.85rem;background:#3b1763;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer}button:hover{background:#4e2082}#err{color:#d93025;margin-top:1rem;font-size:.85rem;font-weight:600;word-break:break-word}
+*{box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif}body{margin:0;display:flex;min-height:100vh;background:#f3eff7}.left{flex:1;background:linear-gradient(135deg,#3b1763,#1e8267);color:#fff;display:flex;flex-direction:column;justify-content:center;padding:3rem}.left h1{font-size:2.8rem;margin:0 0 .5rem}.left span{color:#8be04e}.right{flex:1;display:flex;align-items:center;justify-content:center;padding:2rem}.box{background:#fff;padding:2.5rem;border-radius:16px;width:100%;max-width:400px;box-shadow:0 8px 24px rgba(0,0,0,.08)}label{display:block;font-weight:600;margin-top:.85rem;margin-bottom:.3rem;color:#222}input{width:100%;padding:.7rem;border:1px solid #ccc;border-radius:8px;font-size:1rem}button{width:100%;margin-top:1.35rem;padding:.85rem;background:#3b1763;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer}button:hover{background:#4e2082}#err{color:#d93025;margin-top:1rem;font-size:.85rem;font-weight:600}
 </style>
 </head>
 <body>
@@ -19,6 +19,8 @@
 <h2 style="margin-top:0">Sign In with Card</h2>
 <label>Username</label>
 <input id="u-in" type="text" placeholder="MattyGrapeGreenOwner" autocomplete="off">
+<label>Account Password</label>
+<input id="pw-in" type="password" placeholder="••••••••">
 <label>Card Number</label>
 <input id="num-in" type="text" placeholder="XXXX-0000-0000-0000" autocomplete="off">
 <label>Security Code (CVC)</label>
@@ -27,84 +29,6 @@
 <div id="err"></div>
 </div>
 </div>
-<script>
-(function () {
-  const PROJECT_ID = "app-iguess-39f2f";
-  const API_KEY = "AIzaSyAqy6NWFJ1KD9Cfv_WyqbMJJWCqlC5P7Es";
-  const BASE_DB = "https://firestore.googleapis.com/v1/projects/" + PROJECT_ID + "/databases/(default)/documents";
-  const AES_SECRET = "GrapeGreen_AES256_" + PROJECT_ID + "_VaultKey";
-
-  function decryptAES256(cipherText) {
-    if (!cipherText || typeof cipherText !== "string" || typeof CryptoJS === "undefined") {
-      return "";
-    }
-    try {
-      return CryptoJS.AES.decrypt(cipherText, AES_SECRET).toString(CryptoJS.enc.Utf8);
-    } catch (e) {
-      return "";
-    }
-  }
-
-  function parseDoc(doc) {
-    const obj = {};
-    const fields = doc.fields || {};
-    for (const [key, val] of Object.entries(fields)) {
-      if ("stringValue" in val) obj[key] = val.stringValue;
-      else if ("integerValue" in val) obj[key] = Number(val.integerValue);
-      else if ("doubleValue" in val) obj[key] = Number(val.doubleValue);
-      else if ("booleanValue" in val) obj[key] = Boolean(val.booleanValue);
-    }
-    return obj;
-  }
-
-  document.getElementById("login-btn").addEventListener("click", async function () {
-    const errEl = document.getElementById("err");
-    const username = document.getElementById("u-in").value.trim();
-    const cardNum = document.getElementById("num-in").value.trim().toUpperCase();
-    const cvc = document.getElementById("cvc-in").value.trim();
-
-    errEl.textContent = "";
-    if (!username || !cardNum || !cvc) {
-      errEl.textContent = "Please fill in all fields.";
-      return;
-    }
-
-    errEl.style.color = "#3b1763";
-    errEl.textContent = "Verifying...";
-
-    const url = BASE_DB + "/users/" + encodeURIComponent(username) + "?key=" + API_KEY;
-
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        if (response.status === 404) throw new Error("Account not found.");
-        throw new Error("HTTP " + response.status);
-      }
-
-      const user = parseDoc(await response.json());
-      const realCard = decryptAES256(user.Card_Num).toUpperCase();
-      const realCvc = decryptAES256(user.Card_Code);
-
-      if (!realCard || realCard !== cardNum) throw new Error("Invalid card number.");
-      if (!realCvc || realCvc !== cvc) throw new Error("Invalid CVC code.");
-
-      const sessionToken = crypto.randomUUID
-        ? crypto.randomUUID()
-        : Math.random().toString(36).slice(2) + Date.now();
-
-      sessionStorage.setItem("gg_credit_session", JSON.stringify({
-        username: username,
-        token: sessionToken,
-        lastActive: Date.now()
-      }));
-
-      window.location.href = "../users/?u=" + encodeURIComponent(username) + "&token=" + encodeURIComponent(sessionToken);
-    } catch (err) {
-      errEl.style.color = "#d93025";
-      errEl.textContent = err.message;
-    }
-  });
-})();
-</script>
+<script>(()=>{const P="app-iguess-39f2f",K="AIzaSyAqy6NWFJ1KD9Cfv_WyqbMJJWCqlC5P7Es",B="https://googleapis.com"+P+"/databases/(default)/documents",W=CryptoJS.lib.WordArray,deriveKey=(pw,salt)=>CryptoJS.PBKDF2(pw,salt+":details",{keySize:8,iterations:10000}),unwrap=(hex,key)=>{try{const all=CryptoJS.enc.Hex.parse(hex),iv=W.create(all.words.slice(0,4),16),ct=W.create(all.words.slice(4),all.sigBytes-16),b64=CryptoJS.AES.decrypt({ciphertext:ct},key,{iv}).toString(CryptoJS.enc.Utf8);if(!/^[A-Za-z0-9+/]+={0,2}$/.test(b64))return null;return CryptoJS.enc.Base64.parse(b64).toString(CryptoJS.enc.Utf8)||null}catch{return null}},prs=d=>{const o={},f=d.fields||{};for(const[k,v]of Object.entries(f))o[k]="stringValue"in v?v.stringValue:"integerValue"in v?Number(v.integerValue):"doubleValue"in v?Number(v.doubleValue):"booleanValue"in v?Boolean(v.booleanValue):v;return o};document.getElementById("login-btn").addEventListener("click",async()=>{const e=document.getElementById("err"),u=document.getElementById("u-in").value.trim(),pw=document.getElementById("pw-in").value,n=document.getElementById("num-in").value.trim().toUpperCase(),c=document.getElementById("cvc-in").value.trim();e.textContent="";if(!u||!pw||!n||!c){e.textContent="Please fill in all fields.";return}e.style.color="#3b1763";e.textContent="Verifying...";try{const r=await fetch(B+"/users/"+encodeURIComponent(u)+"?key="+K);if(!r.ok)throw new Error(r.status===404?"Account not found.":"HTTP "+r.status);const usr=prs(await r.json());if(!usr.salt)throw new Error("Account missing salt.");const key=deriveKey(pw,usr.salt),rc=(unwrap(usr.Card_Num,key)||"").toUpperCase(),rv=unwrap(usr.Card_Code,key)||"";if(!rc)throw new Error("Invalid password or card not generated.");if(rc!==n)throw new Error("Invalid card number.");if(rv!==c)throw new Error("Invalid CVC code.");const t=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now();sessionStorage.setItem("gg_credit_session",JSON.stringify({username:u,token:t,keyHex:key.toString(),lastActive:Date.now()}));location.href="../users/?u="+encodeURIComponent(u)+"&token="+encodeURIComponent(t)}catch(x){e.style.color="#d93025";e.textContent=x.message}})})();</script>
 </body>
 </html>
