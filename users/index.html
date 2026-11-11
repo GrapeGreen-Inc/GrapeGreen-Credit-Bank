@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GrapeGreen Credit - Account</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+<header class="topbar">
+<div class="brand">Grape<span>Green</span> Credit</div>
+<div class="user-meta">
+<span id="header-user">Loading...</span>
+<button id="logout-btn" class="btn-outline">Sign Out</button>
+</div>
+</header>
+<div class="layout">
+<aside class="sidebar">
+<button class="nav-btn active" data-tab="balance">Balance</button>
+<button class="nav-btn" data-tab="card">Card View</button>
+<button class="nav-btn" data-tab="payments">Payments</button>
+<button class="nav-btn" data-tab="gift">Gift</button>
+</aside>
+<main class="content">
+<section id="tab-balance" class="tab-panel">
+<h1>Account Balance</h1>
+<div class="panel-card">
+<div class="label">AVAILABLE TOKENS</div>
+<div id="balance-display" class="big-balance">--</div>
+<p id="balance-note" class="muted">Synced live with your GrapeGreen account.</p>
+</div>
+</section>
+<section id="tab-card" class="tab-panel hide">
+<h1>Virtual Credit Card</h1>
+<div class="virtual-card">
+<div class="card-top">
+<span class="card-logo">Grape<span>Green</span></span>
+<div class="emv-chip"></div>
+</div>
+<div class="card-mid">
+<div class="small-lbl">TOKEN BALANCE</div>
+<div id="card-bal" class="card-bal-val">--</div>
+</div>
+<div class="card-bot">
+<div>
+<div class="small-lbl">CARD NUMBER</div>
+<div id="card-num" class="mono">---- ---- ---- ----</div>
+</div>
+<div>
+<div class="small-lbl">SECURITY CODE</div>
+<div class="cvc-row">
+<span id="card-cvc" class="mono">***</span>
+<button id="toggle-cvc" class="mini-btn">Show</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="tab-payments" class="tab-panel hide">
+<h1>Payments & Refunds</h1>
+<div id="staff-banner" class="staff-banner hide">Staff Mode Active: You can approve refunds or mark requests invalid.</div>
+<div class="panel-card">
+<table class="tx-table">
+<thead>
+<tr>
+<th>User</th>
+<th>Site</th>
+<th>Item / Reason</th>
+<th>Amount</th>
+<th>Status / Action</th>
+</tr>
+</thead>
+<tbody id="tx-list">
+<tr><td colspan="5">Loading transactions...</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="tab-gift" class="tab-panel hide">
+<h1>Send Token Gift</h1>
+<div class="panel-card">
+<p class="muted">All external credit transfers include a <strong>5% network tax</strong> (rounded to the nearest whole token).</p>
+<label>Recipient Username</label>
+<input id="gift-to" type="text" placeholder="Username">
+<label>Gift Amount (Tokens)</label>
+<input id="gift-amt" type="number" min="1" placeholder="25">
+<div id="tax-preview" class="tax-box">Total deducted: 0 tokens (0 tax)</div>
+<button id="gift-send-btn" class="primary-btn">Send Tokens</button>
+<div id="gift-status" class="status-msg"></div>
+</div>
+</section>
+</main>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
